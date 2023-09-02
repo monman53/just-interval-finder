@@ -7,7 +7,8 @@ wasm-pack build
 popd
 
 pushd www
-npm run build
+rm -rf dist/*
 rm -rf ../docs/*
+npm run build
 cp dist/* ../docs
 popd

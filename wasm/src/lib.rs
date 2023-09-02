@@ -2,6 +2,7 @@ mod utils;
 
 use wasm_bindgen::prelude::*;
 use js_sys::*;
+use find_peaks::*;
 
 use rustfft::{Fft, FftDirection, num_complex::Complex, algorithm::Radix4};
 
@@ -44,12 +45,30 @@ fn complex_to_real(input: Vec<Complex<f32>>) -> f32 {
 }
 
 #[wasm_bindgen]
-// pub fn wasm_test(input: js_sys::Float32Array, fft_size: usize) -> Vec<js_sys::Float32Array> {
-pub fn wasm_test(input: js_sys::Float32Array) -> f32 {
-    let fft = Radix4::new(input.length() as usize, FftDirection::Forward);
+// pub fn wasm_test(input: js_sys::Float32Array, min_height: f32, peaks: js_sys::Float32Array) -> Float32Array {
+pub fn wasm_test(input: js_sys::Float32Array, min_height: f32, min_distance: usize) -> Float32Array {
+    let input_size = input.length() as usize;
+    let fft = Radix4::new(input_size, FftDirection::Forward);
     let mut buffer = real_to_complex(input);
     fft.process(&mut buffer);
-    complex_to_real(buffer)
+    let norms: Vec<f32> = buffer.iter().map(|x| x.re).collect();
+    let ps = find_peaks::PeakFinder::new(&norms)
+        .with_min_height(min_height)
+        .with_min_distance(min_distance)
+        .find_peaks();
+    let mut sorted: Vec<(f32, usize)> = ps.iter()
+        .filter(|x| x.middle_position() < input_size / 2)
+        .map(|x| (x.height.unwrap(), x.middle_position()))
+        .collect::<Vec<(f32, usize)>>();
+    sorted.sort_by(|a, b| b.partial_cmp(a).unwrap());
+    let sorted = sorted.iter().map(|x| x.1).collect::<Vec<usize>>();
+    let peaks = js_sys::Float32Array::new_with_length((sorted.len() * 2) as u32);
+    for i in 0..peaks.length() {
+        peaks.set_index(i, sorted[(i/2) as usize] as f32);
+    }
+    peaks
+    // ps.iter().map(|x| x.middle_position() as f32).collect()
+    // complex_to_real(buffer)
     // let (output_re, output_im) = complex_to_real(buffer);
     // vec![output_re, output_im]
 }
