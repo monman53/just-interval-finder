@@ -8,4 +8,6 @@ popd
 
 pushd www
 npm run build
+rm -rf ../docs/*
+cp dist/* ../docs
 popd
