@@ -108,8 +108,11 @@ startButton.addEventListener("click", async () => {
 
     // analyzer.fftSize = 4096 * 8;
     analyzer.fftSize = 2 ** 10;
+    analyzer.minDecibels = -160;
+    analyzer.maxDecibels = 0;
     const min_height = 2 ** -1;
     const min_distance = 2 ** 4;
+    console.log(analyzer.fftSize, analyzer.frequencyBinCount, analyzer.minDecibels, analyzer.maxDecibels, analyzer.smoothingTimeConstant)
 
     // WebGL setup
     const gl = canvasTimeDomain.getContext('webgl2');
